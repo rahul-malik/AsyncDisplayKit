@@ -82,11 +82,13 @@
 
 @end
 
-@implementation ASPINRemoteImageDownloader
+  
+static ASPINRemoteImageDownloader *sharedDownloader;
 
+@implementation ASPINRemoteImageDownloader
+  
 + (instancetype)sharedDownloader
 {
-  static ASPINRemoteImageDownloader *sharedDownloader = nil;
   static dispatch_once_t onceToken = 0;
   dispatch_once(&onceToken, ^{
     sharedDownloader = [[ASPINRemoteImageDownloader alloc] init];
@@ -94,7 +96,18 @@
   return sharedDownloader;
 }
 
++ (void)setSharedImageManagerWithConfiguration:(NSURLSessionConfiguration *)configuration
+{
+    NSAssert(sharedDownloader != nil, @"Singleton has been created and session can no longer be configured.");
+    __unused PINRemoteImageManager *sharedManager = [[self class] sharedPINRemoteImageManager:configuration];
+}
+
 - (PINRemoteImageManager *)sharedPINRemoteImageManager
+{
+  return [self sharedPINRemoteImageManager:nil];
+}
+
+- (PINRemoteImageManager *)sharedPINRemoteImageManager:(NSURLSessionConfiguration *)configuration
 {
   static ASPINRemoteImageManager *sharedPINRemoteImageManager = nil;
   static dispatch_once_t onceToken;
@@ -116,9 +129,9 @@
                           userInfo:nil];
         @throw e;
     }
-    sharedPINRemoteImageManager = [[ASPINRemoteImageManager alloc] initWithSessionConfiguration:nil alternativeRepresentationProvider:self];
+    sharedPINRemoteImageManager = [[ASPINRemoteImageManager alloc] initWithSessionConfiguration:configuration alternativeRepresentationProvider:self];
 #else
-    sharedPINRemoteImageManager = [[ASPINRemoteImageManager alloc] initWithSessionConfiguration:nil];
+    sharedPINRemoteImageManager = [[ASPINRemoteImageManager alloc] initWithSessionConfiguration:configuration];
 #endif
   });
   return sharedPINRemoteImageManager;
